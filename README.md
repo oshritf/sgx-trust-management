@@ -1,5 +1,7 @@
 IBM Trusted Services libraries and reference
 
+!! Under construction, come back later !!
+
 Compilation steps:
 - cd truce/application
 - make
