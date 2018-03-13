@@ -44,3 +44,6 @@ respond with a SPID. Update defs.h with you SPID, certificate and the quote sign
 * Service-Provider:
 	- Run truce_server executable
 
+
+## Contact
+Feel free to write to Gidon Gershinsky (gidon@il.ibm.com) and Eliad Tsfadia (eliadtsfadia@gmail.com).
