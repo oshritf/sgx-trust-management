@@ -1,14 +1,14 @@
-# Linux SGX Truce Library
+# Linux SGX Trust Management Framework
 ## Introduction
-TruCE ("Trust in Cloud Enclaves") is a framework for trust management in Intel SGX enclaves. It handles all aspects of remote attestation and secret delivery process. TruCE enables application developers to focus on the application code, performing attestation by a simple API call.
-TruCE is a service model that can have different implementations underneath, yet exposes the same interface to applications. The current implementation of remote attestation is based on the generation of an initial secret inside the enclave, instead of sending it to the enclave. We generate an RSA private/public key pair and embed the public key (hash) in the enclave "attestation quote" (initial input into attestation process). Since the quote is signed by Intel keys, the resulting attestation report can be kept in an untrusted storage, reducing the trust requirements placed on TruCE server. The application clients can verify an enclave report by using the Intel attestation public key, retrieve the enclave public key and use it for the encryption of secrets (such as data keys) to be sent to the enclave for subsequent decryption and processing of sensitive data.
+Trust Management Framework (or TruCE for short - "Trust in Cloud Enclaves") handles all aspects of remote attestation and secret delivery process. The framework enables application developers to focus on the application code, performing attestation by a simple API call.
+Trust Management Framework is a service model that can have different implementations underneath, yet exposes the same interface to applications. The current implementation of remote attestation is based on the generation of an initial secret inside the enclave, instead of sending it to the enclave. We generate an RSA private/public key pair and embed the public key (hash) in the enclave "attestation quote" (initial input into attestation process). Since the quote is signed by Intel keys, the resulting attestation report can be kept in an untrusted storage, reducing the trust requirements placed on TruCE server. The application clients can verify an enclave report by using the Intel attestation public key, retrieve the enclave public key and use it for the encryption of secrets (such as data keys) to be sent to the enclave for subsequent decryption and processing of sensitive data.
 
-TruCE has two main components:
+Trust Management Framework has two main components:
 
 * TruCE server: A standalone process that registers with Intel Attestation Service and assists in remote attestation of RestAssured platform enclaves.
 * TruCE SDK: A toolkit for application development. It has API and libraries for trusted (enclave) part of the cloud application, untrusted part of the cloud application, and the off-cloud client code that interacts with the cloud application.
 
-TruCE can run in either real or simulated IAS mode. In the former, full remote attestation is performed, including the required interaction with the Intel Attestation Service (IAS). At a development stage, you can use the simulated IAS mode - there, TruCE doesnt need registration with Intel, since it doesnt contact the IAS and skips the attestation report signature verification step.
+Trust Management Framework can run in either real or simulated IAS mode. In the former, full remote attestation is performed, including the required interaction with the Intel Attestation Service (IAS). At a development stage, you can use the simulated IAS mode - there, TruCE doesnt need registration with Intel, since it doesnt contact the IAS and skips the attestation report signature verification step.
 
 
 ## Third party dependencies
