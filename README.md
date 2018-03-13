@@ -1,36 +1,46 @@
 # Linux SGX Truce Library
 ## Introduction
-Truce Library provides a simplified SDK for Intel SGX developers to implement attestation.
-In the current version of Truce, there are 3 components: Applications, Clients and Service Provider.
-Applications are the entities that contains SGX enclaves that should be attested, Clients are the entities that want to attest an SGX enclave of an application in order to provide secrets, and the Service Provider (can be seen as a cloud service) is the entity that communicate with the Intel Attestation Service (IAS) and stores all IAS reports of the Applications' SGX enclaves. Any enclave that should be attested need to sign in the Service Provider, and any client that wants to attest an SGX enclave should receive from the Service Provider the enclave's IAS report and verify it. 
+TruCE ("Trust in Cloud Enclaves") is a framework for trust management in Intel SGX enclaves. It handles all aspects of remote attestation and secret delivery process. TruCE enables application developers to focus on the application code, performing attestation by a simple API call.
+TruCE is a service model that can have different implementations underneath, yet exposes the same interface to applications. The current implementation of remote attestation is based on the generation of an initial secret inside the enclave, instead of sending it to the enclave. We generate an RSA private/public key pair and embed the public key (hash) in the enclave "attestation quote" (initial input into attestation process). Since the quote is signed by Intel keys, the resulting attestation report can be kept in an untrusted storage, reducing the trust requirements placed on TruCE server. The application clients can verify an enclave report by using the Intel attestation public key, retrieve the enclave public key and use it for the encryption of secrets (such as data keys) to be sent to the enclave for subsequent decryption and processing of sensitive data.
 
-## Pre-Request steps
+TruCE has two main components:
+
+* TruCE server: A standalone process that registers with Intel Attestation Service and assists in remote attestation of RestAssured platform enclaves.
+* TruCE SDK: A toolkit for application development. It has API and libraries for trusted (enclave) part of the cloud application, untrusted part of the cloud application, and the off-cloud client code that interacts with the cloud application.
+
+TruCE can run in either real or simulated IAS mode. In the former, full remote attestation is performed, including the required interaction with the Intel Attestation Service (IAS). At a development stage, you can use the simulated IAS mode - there, TruCE doesnt need registration with Intel, since it doesnt contact the IAS and skips the attestation report signature verification step.
+
+
+## Third party dependencies
 * Download and install the latest packages of Intel SGX LINUX from https://01.org/intel-software-guard-extensions/downloads.
 * Download and build SGX SSL located at the git repository https://github.com/intel/intel-sgx-ssl.
 * Update the values of SGX_SDK and SGX_SSL in the Makefile.
-* Download cpp-base64 from the git repository https://github.com/ReneNyffenegger/cpp-base64, and put it under the aux_lib folder.
+* Download cpp-base64 from the git repository https://github.com/ReneNyffenegger/cpp-base64, and put the cpp-base64 folder under the aux_lib folder.
 * Install the following packages:
 	- sudo apt-get install libssl-dev
 	- sudo apt-get install libjsoncpp-dev
 	- sudo apt-get install libcur14-openssl-dev
-* In order to run the code in IAS Real mode, create a [developer account](https://software.intel.com/en-us/sgx). After the registration with a certificate (can be self-signed for development purposes), Intel will
+* In order to run the code in real IAS mode, create a [developer account](https://software.intel.com/en-us/sgx). After the registration with a certificate (can be self-signed for development purposes), Intel will
 respond with a SPID. Update defs.h with you SPID, certificate and the quote signing type.
 
-## Compilation steps
-* In order to compile in IAS simulation mode, type "make SIMULATE_IAS=1".
-* In order to compile in IAS Real mode, type "make".
+## Build
+* In order to build in a simulated IAS mode, run "make SIMULATE_IAS=1".
+* In order to build in a real IAS mode, run "make".
 * A successful compilation should output the following files:
-	- Under truce/application: libtruce_u.so, libtruce_t.a and app.
-	- Under client: libtruce_client.so and truce_client.
+	- Under application: libtruce_u.so, libtruce_t.a (and app).
+	- Under client: libtruce_client.so (and truce_client).
 	- Under service-provider: truce_server.
 
 ## Usage
 * Application:
-	- The untrusted part should use the API in app/truce_u.h and link with libtruce_u.so
-	- The trusted part should import truce_enclave.edl and link with libtruce_t.a
+	- The untrusted part should use the API in truce_app/truce_u.h and link with libtruce_u.so
+	- The trusted part should import truce_enclave.edl, use the API in truce_enclave/truce_t.h  and link with libtruce_t.a
+	- The file truce_enclave/truce_enclave_private.pem should be replaced with your enclave signing key (see SGX SDK documentation).
+	- The file truce_enclave/truce_enclave.config.xml could be modified to configure the enclave memory size and other parameters.
 	- truce_app/app.cpp is an example of the untrusted part of such application.
 * Client:
 	- Should use the API in truce_client.h and link with libtruce_client.so
 	- client.cpp is an example of such client.
 * Service-Provider:
-	- Run truce_server.
+	- Run truce_server executable
+
