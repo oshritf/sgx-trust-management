@@ -2,7 +2,7 @@
 ## Introduction
 Trust Management Framework (or TruCE for short - "Trust in Cloud Enclaves") handles all aspects of remote attestation and secret delivery process in Intel SGX enclaves. The framework enables application developers to focus on the application code, performing attestation by a simple API call. Additional calls are available for easy-to-use enclave sealing and secret passing to enclaves.
 
-Trust Management Framework is a service model that can have different implementations underneath, yet exposes the same interface to applications. The current implementation of remote attestation is based on the generation of an initial secret inside the enclave, instead of sending it to the enclave. We generate an RSA private/public key pair and embed the public key (hash) in the enclave "attestation quote" (initial input into attestation process). Since the quote is signed by Intel keys, the resulting attestation report can be kept in an untrusted storage, reducing the trust requirements placed on TruCE server. The application clients can verify an enclave report by using the Intel attestation public key, retrieve the enclave public key and use it for the encryption of secrets (such as data keys) to be sent to the enclave for subsequent decryption and processing of sensitive data.
+Trust Management Framework is a service model that can have different implementations underneath, yet exposes the same interface to applications. The current implementation of remote attestation is based on the generation of an initial secret inside the enclave, instead of sending it to the enclave. We generate an RSA private/public key pair and embed the public key (hash) in the enclave attestation quote. Since the quote is signed by Intel keys, the resulting attestation report can be kept in an untrusted storage, reducing the trust requirements placed on TruCE server. The application clients can verify an enclave report by using the Intel attestation public key, retrieve the enclave public key and use it for the encryption of secrets (such as data keys) to be sent to the enclave for subsequent decryption and processing of sensitive data.
 
 Trust Management Framework has two main components:
 
@@ -21,13 +21,13 @@ Trust Management Framework can run in either real or simulated IAS mode. In the 
 	- sudo apt-get install libssl-dev
 	- sudo apt-get install libjsoncpp-dev
 	- sudo apt-get install libcur14-openssl-dev
-* In order to run the code in real IAS mode, create a [developer account](https://software.intel.com/en-us/sgx). After the registration with a certificate (can be self-signed for development purposes), Intel will
-respond with a SPID. Update defs.h with you SPID, certificate and the quote signing type.
+* In order to run the code in a real IAS mode, create a [developer account](https://software.intel.com/en-us/sgx). After the registration with a certificate (can be self-signed for development purposes), Intel will
+respond with a SPID. Update defs.h with your SPID, certificate and the quote signing type.
 
 ## Build
 * In order to build in a simulated IAS mode, run "make SIMULATE_IAS=1".
 * In order to build in a real IAS mode, run "make".
-* A successful compilation should output the following files:
+* A successful compilation should produce the following files:
 	- Under application: libtruce_u.so, libtruce_t.a (and app).
 	- Under client: libtruce_client.so (and truce_client).
 	- Under service-provider: truce_server.
@@ -41,10 +41,10 @@ respond with a SPID. Update defs.h with you SPID, certificate and the quote sign
 	- truce_app/app.cpp is an example of the untrusted part of such application.
 * Client:
 	- Should use the API in truce_client.h and link with libtruce_client.so
-	- client.cpp is an example of such client.
+	- client.cpp is an example of such a client.
 * Service-Provider:
-	- Run truce_server executable
+	- Run the truce_server executable
 
 
 ## Contact
-Feel free to write to Gidon Gershinsky (gidon@il.ibm.com) and Eliad Tsfadia (eliadtsfadia@gmail.com).
+Feel free to write to Gidon Gershinsky (gidon@il.ibm.com) and Eliad Tsfadia (eliad.tsfadia@ibm.com).
