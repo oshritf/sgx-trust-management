@@ -25,7 +25,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <arpa/inet.h> 
-#include <curl/curl.h>
+
 
 const char *g_secret1 = "This is my first secret";
 const char *g_secret2 = "This is my second and longer secret";
@@ -52,10 +52,7 @@ int main(int argc, char* argv[])
 
     // Create TCP connection to agent/enclave. You can use any transport in your application.
 
-    // TODO: we call curl_global_init since for some reason, it makes verify_cert_chain to work.
-    // It might be cause due to some memory leak, or for some good reason. We should investigate it.
-    curl_global_init(CURL_GLOBAL_DEFAULT);
-
+    
     if (!inet_connect(sockfd, agent_address, APP_PORT)) {
         printf("ERROR : failed to connect to the Application at %s:%d\n", truce_server_address, APP_PORT);
         goto cleanup;
@@ -70,9 +67,11 @@ int main(int argc, char* argv[])
     printf("Received t_id:\n");
     print_buffer((uint8_t *) &t_id, sizeof(t_id));
 
+    truce_client_init(truce_server_address);
+
     // Get the enclave record from TruCE server
 
-    if (!truce_client_recv_enclave_record(truce_server_address, t_id, t_rec)) {
+    if (!truce_client_recv_enclave_record(t_id, t_rec)) {
         printf("ERROR: failed to receive truce record from truce server\n");
         goto cleanup;
     }

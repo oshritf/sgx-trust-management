@@ -29,22 +29,42 @@
 #include <arpa/inet.h> 
 
 #include <openssl/rsa.h>
-
-FILE* OUTPUT = stdout;
+#include <curl/curl.h>
 
 #include "truce_client.h"
 #include "IAS_report_verifier.h"
+
+
+FILE* OUTPUT =  stdout;
+
+const char* truceServerAddress;
+
 
 void print_string(const char* str) {
     fprintf(OUTPUT, "%s", str);
 }
 
 
+bool truce_client_init(const char* truce_server_address) {
+    truceServerAddress = truce_server_address;
+
+    // TODO: we call curl_global_init since for some reason, it makes verify_cert_chain to work.
+    // It might be cause due to some memory leak, or for some good reason. We should investigate it.
+    curl_global_init(CURL_GLOBAL_DEFAULT);
+
+    return true;
+}
+
+
 bool truce_client_recv_enclave_record(
-        const char* truce_server_address,
         const truce_id_t &t_id,
         truce_record_t &t_rec)
 {
+
+    if (NULL == truceServerAddress) {
+        fprintf(OUTPUT, "ERROR: client not initialized with TruCE server address\n");
+        return false;
+    }
 
     // Create connection to TruCE server
 
@@ -59,35 +79,37 @@ bool truce_client_recv_enclave_record(
     int tmp_int = 0;
     uint8_t match_result = 0;
 
-    if (!inet_connect(sockfd, truce_server_address, SP_CS_PORT)) {
-        fprintf(OUTPUT, "ERROR: connecting to TruCE server (%s:%d) has failed\n", truce_server_address, SP_CS_PORT);
+    if (!inet_connect(sockfd, truceServerAddress, SP_CS_PORT)) {
+        fprintf(OUTPUT, "ERROR: connecting to TruCE server (%s:%d) has failed\n", 
+            truceServerAddress, SP_CS_PORT);
+        return false;
     }
 
     fprintf(OUTPUT, "Connected to TruCE server\n");
 
     // Sending t_id
-    fprintf(OUTPUT, "Sending t_id...\n");
+    //fprintf(OUTPUT, "Sending t_id...\n");
     if (!write_all(sockfd, (uint8_t *) &t_id, sizeof(t_id))) {
-        fprintf(stdout, "ERROR: failed to send t_id\n");
+        fprintf( OUTPUT, "ERROR: failed to send t_id\n");
         goto cleanup;
     }
 
     // Receiving search result
-    fprintf(OUTPUT, "Receiving match result...\n");
+    //fprintf(OUTPUT, "Receiving match result...\n");
     if (1 != read(sockfd, &match_result, 1)) {
-        fprintf(stdout, "ERROR: failed to read match_result\n");
+        fprintf( OUTPUT, "ERROR: failed to read match_result\n");
         goto cleanup;
     }
 
     if (match_result != 1) {
-        fprintf(stdout, "Warning: No enclave was found\n");
+        fprintf( OUTPUT, "Warning: No enclave was found\n");
         goto cleanup;
     }
 
     // Receiving IAS_report_body length
-    fprintf(OUTPUT, "Receiving the size of IAS_report_body...\n");
+    //fprintf(OUTPUT, "Receiving the size of IAS_report_body...\n");
     if (!read_all(sockfd, (uint8_t *) &tmp_int, 4)) {
-        fprintf(stdout, "ERROR: missing bytes for IAS_report_body length\n");
+        fprintf( OUTPUT, "ERROR: missing bytes for IAS_report_body length\n");
         goto cleanup;
     }
     len = ntohl(tmp_int);
@@ -95,19 +117,19 @@ bool truce_client_recv_enclave_record(
     fprintf(OUTPUT, "Receiving %u bytes of IAS_report_body...\n", len);
     ias_report_body = (char *) calloc(1,len+1);
     if (NULL == ias_report_body) {
-        fprintf(stdout, "ERROR: failed to allocated %d byte for ias_report_body\n", len);
+        fprintf( OUTPUT, "ERROR: failed to allocated %d byte for ias_report_body\n", len);
         goto cleanup;
     }
     if (!read_all(sockfd, (uint8_t *) ias_report_body, len)) {
-        fprintf(stdout, "ERROR: missing bytes for ias_report_body\n");
+        fprintf( OUTPUT, "ERROR: missing bytes for ias_report_body\n");
         goto cleanup;
     }
 
 
     // Receiving IAS_report_signature_base64 length
-    fprintf(OUTPUT, "Receiving the size of IAS_report_signature_base64...\n");
+    //fprintf(OUTPUT, "Receiving the size of IAS_report_signature_base64...\n");
     if (!read_all(sockfd, (uint8_t *) &tmp_int, 4)) {
-        fprintf(stdout, "ERROR: missing bytes for IAS_report_signature_base64 length\n");
+        fprintf( OUTPUT, "ERROR: missing bytes for IAS_report_signature_base64 length\n");
         goto cleanup;
     }
     len = ntohl(tmp_int);
@@ -115,51 +137,51 @@ bool truce_client_recv_enclave_record(
     fprintf(OUTPUT, "Receiving %u bytes of ias_report_signature_base64...\n", len);
     ias_report_signature_base64 = (char *) calloc(1,len+1);
     if (NULL == ias_report_signature_base64) {
-        fprintf(stdout, "ERROR: failed to allocated %d byte for ias_report_signature_base64\n", len+1);
+        fprintf( OUTPUT, "ERROR: failed to allocated %d byte for ias_report_signature_base64\n", len+1);
         goto cleanup;
     }
     if (!read_all(sockfd, (uint8_t *) ias_report_signature_base64, len)) {
-        fprintf(stdout, "ERROR: missing bytes for ias_report_signature_base64\n");
+        fprintf( OUTPUT, "ERROR: missing bytes for ias_report_signature_base64\n");
         goto cleanup;
     }
 
 
     // Receiving IAS_report_cert_chain_urlsafe_pem length
-    fprintf(OUTPUT, "Receiving the size of IAS_report_cert_chain_urlsafe_pem...\n");
+    //fprintf(OUTPUT, "Receiving the size of IAS_report_cert_chain_urlsafe_pem...\n");
     if (!read_all(sockfd, (uint8_t *) &tmp_int, 4)) {
-        fprintf(stdout, "ERROR: missing bytes for IAS_report_cert_chain_urlsafe_pem length\n");
+        fprintf( OUTPUT, "ERROR: missing bytes for IAS_report_cert_chain_urlsafe_pem length\n");
         goto cleanup;
     }
     len = ntohl(tmp_int);
     // Receiving IAS_report_cert_chain_urlsafe_pem
-    fprintf(OUTPUT, "Receiving %u bytes of ias_report_signature_base64...\n", len);
+    fprintf(OUTPUT, "Receiving %u bytes of ias_report_cert_chain_urlsafe_pem...\n", len);
     ias_report_cert_chain_urlsafe_pem = (char *) calloc(1,len+1);
     if (NULL == ias_report_cert_chain_urlsafe_pem) {
-        fprintf(stdout, "ERROR: failed to allocated %d byte for ias_report_cert_chain_urlsafe_pem\n", len+1);
+        fprintf( OUTPUT, "ERROR: failed to allocated %d byte for ias_report_cert_chain_urlsafe_pem\n", len+1);
         goto cleanup;
     }
     if (!read_all(sockfd, (uint8_t *) ias_report_cert_chain_urlsafe_pem, len)) {
-        fprintf(stdout, "ERROR: missing bytes for ias_report_cert_chain_urlsafe_pem\n");
+        fprintf( OUTPUT, "ERROR: missing bytes for ias_report_cert_chain_urlsafe_pem\n");
         goto cleanup;
     }
 
-
     // Receiving public_keys_size length
-    fprintf(OUTPUT, "Receiving the size of Enclave's Public Keys...\n");
+    //fprintf(OUTPUT, "Receiving the size of Enclave's Public Keys...\n");
     if (!read_all(sockfd, (uint8_t *) &tmp_int, 4)) {
-        fprintf(stdout, "ERROR: missing bytes for public_keys_size\n");
+        fprintf( OUTPUT, "ERROR: missing bytes for public_keys_size\n");
         goto cleanup;
     }
     public_keys_size = ntohl(tmp_int);
+
     // Receiving public_keys
     fprintf(OUTPUT, "Receiving %u bytes of Enclave's Public Keys...\n", public_keys_size);
     public_keys = (uint8_t *) calloc(1,public_keys_size);
     if (NULL == public_keys) {
-        fprintf(stdout, "ERROR: failed to allocated %d byte for public_keys\n", public_keys_size);
+        fprintf( OUTPUT, "ERROR: failed to allocated %d byte for public_keys\n", public_keys_size);
         goto cleanup;
     }
     if (!read_all(sockfd, public_keys, public_keys_size)) {
-        fprintf(stdout, "ERROR: missing bytes for public_keys\n");
+        fprintf( OUTPUT, "ERROR: missing bytes for public_keys\n");
         goto cleanup;
     }
 
@@ -249,8 +271,6 @@ bool truce_client_encrypt_secret(
     uint8_t *pubkey_rsa_tmp = NULL;
     uint32_t rsa_pubkey_len = t_rec.p_public_keys->rsa4096_public_key_size;
     bool ret = false;
-
-    printf("Encrypting secret...\n");
 
     pubkey_rsa_tmp = (uint8_t *) calloc(1, rsa_pubkey_len);
     if (NULL == pubkey_rsa_tmp) {

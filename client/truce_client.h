@@ -17,6 +17,10 @@
     * under the License.
     */
 
+#ifndef _TRUCE_CLIENT_H
+#define _TRUCE_CLIENT_H
+
+
 #include <stdint.h>
 #include "../IAS_report.h"
 #include "../truce_record.h"
@@ -25,8 +29,10 @@
 
 #include <sgx_quote.h>
 
+bool truce_client_init(const char* truce_server_address);
+
 bool truce_client_recv_enclave_record(
-        const char* truce_server_address,
+//const char* truce_server_address,
         const truce_id_t &t_id,
         truce_record_t &t_rec);
 
@@ -51,4 +57,5 @@ bool truce_client_encrypt_secret(
         uint8_t *&output, // output - should be freed outside.
         uint32_t &output_size); // output
 
+#endif
 
