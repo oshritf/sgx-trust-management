@@ -32,7 +32,6 @@
 bool truce_client_init(const char* truce_server_address);
 
 bool truce_client_recv_enclave_record(
-//const char* truce_server_address,
         const truce_id_t &t_id,
         truce_record_t &t_rec);
 

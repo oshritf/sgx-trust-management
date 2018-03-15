@@ -168,11 +168,11 @@ bool inet_accept(int &connfd, int listenfd) {
     }
     if (getpeername(connfd, (struct sockaddr *)&addr, &addr_size) != 0) {
         printf("ERROR: getpeername eeror occured. errno = %d\n", errno);
-        goto cleanup;
     }
-    strcpy(ip_str, inet_ntoa(addr.sin_addr));
-
-    fprintf(stdout, "Connection from %s\n", ip_str);
+    else {
+        strcpy(ip_str, inet_ntoa(addr.sin_addr));
+        printf("Connection from %s\n", ip_str);
+    }
 
     retval = true;
 

@@ -73,7 +73,6 @@ bool truce_session(sgx_enclave_id_t enclave_id,
     sgx_status_t status = SGX_SUCCESS;
     FILE* OUTPUT = stdout;
     FILE *seal_file = NULL;
-    const char *sp_address = config.truce_server_address;
     const char *seal_file_name = config.seal_path;
     uint8_t *sealed_keys = NULL;
     uint32_t sealed_keys_size = 0;
@@ -88,6 +87,21 @@ bool truce_session(sgx_enclave_id_t enclave_id,
     uint32_t public_keys_size = 0;
     uint8_t attestation_result = 0;
     bool init_with_seal_file = false;
+
+    char sp_address[100];
+    int sp_port;
+
+    const char *port_pos = strchr(config.truce_server_address, ':');
+    if (port_pos) {
+        size_t addr_len = port_pos - config.truce_server_address;
+        memcpy(sp_address, config.truce_server_address, addr_len);
+        sp_address[addr_len] = '\0';
+        sp_port = atoi(port_pos + 1);
+    }
+    else {
+        memcpy(sp_address, config.truce_server_address, strlen(config.truce_server_address));
+        sp_port = SP_AS_PORT_DEFAULT;
+    }
 
 
     if (seal_file_name != NULL) {
@@ -231,9 +245,12 @@ bool truce_session(sgx_enclave_id_t enclave_id,
 
 
     // Connecting to the Service Provider
-    fprintf(OUTPUT, "Connecting to SP at address %s...\n", sp_address);
-    if (!inet_connect(sockfd, sp_address, SP_AS_PORT)) {
-        fprintf(OUTPUT, "ERROR: failed to connect to SP on port %d\n", SP_AS_PORT);
+    
+
+
+    fprintf(OUTPUT, "Connecting to SP at address %s : %d\n", sp_address, sp_port);
+    if (!inet_connect(sockfd, sp_address, sp_port)) {
+        fprintf(OUTPUT, "ERROR: failed to connect to SP at address %s : %d\n", sp_address, sp_port);
         goto cleanup;
     }
 
@@ -280,7 +297,7 @@ bool truce_session(sgx_enclave_id_t enclave_id,
 
 
     // Receive SigRL size
-    fprintf(OUTPUT, "Receiving SigRL size...\n");
+    //fprintf(OUTPUT, "Receiving SigRL size...\n");
     if (!read_all(sockfd, (uint8_t *) &sig_rl_size, 4)) {
         fprintf(OUTPUT, "ERROR: failed to recv sigrl_size\n");
         goto cleanup;
@@ -325,7 +342,7 @@ bool truce_session(sgx_enclave_id_t enclave_id,
     }
 
     // Send Quote size
-    fprintf(OUTPUT, "Sending Quote size...\n");
+    //fprintf(OUTPUT, "Sending Quote size...\n");
     if (!write_all(sockfd, (uint8_t *) &quote_size, 4)) {
         fprintf(OUTPUT, "ERROR: failed to send quote size\n");
         goto cleanup;
@@ -338,7 +355,7 @@ bool truce_session(sgx_enclave_id_t enclave_id,
     }
 
     // Send public_keys_size
-    fprintf(OUTPUT, "Sending the size of the enclave's public keys\n");
+    //fprintf(OUTPUT, "Sending the size of the enclave's public keys\n");
     if (!write_all(sockfd, (uint8_t *) &public_keys_size, 4)) {
         fprintf(OUTPUT, "ERROR: failed to send public keys size\n");
         goto cleanup;

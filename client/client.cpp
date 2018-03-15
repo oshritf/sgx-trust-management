@@ -53,8 +53,8 @@ int main(int argc, char* argv[])
     // Create TCP connection to agent/enclave. You can use any transport in your application.
 
     
-    if (!inet_connect(sockfd, agent_address, APP_PORT)) {
-        printf("ERROR : failed to connect to the Application at %s:%d\n", truce_server_address, APP_PORT);
+    if (!inet_connect(sockfd, agent_address, 6000)) {
+        printf("ERROR : failed to connect to the Application at %s:%d\n", truce_server_address, 6000);
         goto cleanup;
     }
 

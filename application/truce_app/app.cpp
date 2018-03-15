@@ -91,8 +91,8 @@ int main(int argc, char* argv[])
     print_buffer((uint8_t *) &t_session.truce_id, sizeof(t_session.truce_id));
 
     // Creating a listening socket. Waiting for clients connections.
-    if (!inet_listen(listenfd, APP_PORT)) {
-        fprintf(OUTPUT, "ERROR: Failed to listen on port %d.\n", APP_PORT);
+    if (!inet_listen(listenfd, 6000)) {
+        fprintf(OUTPUT, "ERROR: Failed to listen on port %d.\n", 6000);
         return 1;
     }
 

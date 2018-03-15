@@ -56,6 +56,9 @@ typedef struct {
 
 map<truce_id_t,truce_record_t,truce_cmp_ids_t> g_truce_map;
 
+int attestation_service_port;
+int report_service_port;
+
 
 bool handle_attestation_service_connection(int connfd) {
     sgx_quote_nonce_t nonce = {{0}};// TODO: should be chosen at random
@@ -79,19 +82,19 @@ bool handle_attestation_service_connection(int connfd) {
         goto cleanup;
     }
 #endif
-    fprintf(stdout, "AS: Sending SPID...\n");
+    fprintf(stdout, " Attestation Service: Sending SPID...\n");
     if (!write_all(connfd, (uint8_t *) &spid, sizeof(spid))) {
          fprintf(stdout, "ERROR: failed to send spid\n");
          goto cleanup;
     }
 
-    fprintf(stdout, "AS: Sending nonce...\n");
+    fprintf(stdout, " Attestation Service: Sending nonce...\n");
     if (!write_all(connfd, (uint8_t *) &nonce, sizeof(nonce))) {
          fprintf(stdout, "ERROR: failed to send nonce\n");
          goto cleanup;
     }
 
-    fprintf(stdout, "AS: Receiving epid_group_id...\n");
+    fprintf(stdout, " Attestation Service: Receiving epid_group_id...\n");
     if (!read_all(connfd, (uint8_t *) &epid_group_id, sizeof(epid_group_id))) {
          fprintf(stdout, "ERROR: failed to recv epid_group_id\n");
          goto cleanup;
@@ -99,7 +102,7 @@ bool handle_attestation_service_connection(int connfd) {
 #ifdef SIMULATE_IAS
     fprintf(stdout, "******* Warning: Running in IAS simulation mode. Sending empty SigRL\n");
 #else
-    fprintf(stdout, "AS: Retrieving SigRL from IAS...\n");
+    fprintf(stdout, " Attestation Service: Retrieving SigRL from IAS...\n");
     if (!get_sig_rl(ias_web_service,
                     epid_group_id,
                     p_sig_rl,
@@ -109,13 +112,13 @@ bool handle_attestation_service_connection(int connfd) {
     }
 #endif
 
-    fprintf(stdout, "AS: Sending SigRL size (= %u)...\n", sig_rl_size);
+    //fprintf(stdout, " Attestation Service: Sending SigRL size (= %u)...\n", sig_rl_size);
     if (!write_all(connfd, (uint8_t *) &sig_rl_size, sizeof(sig_rl_size))) {
          fprintf(stdout, "ERROR: failed to send sig_rl_size\n");
          goto cleanup;
     }
     if (sig_rl_size != 0) {
-        fprintf(stdout, "AS: Sending %u bytes of SigRL\n", sig_rl_size);
+        fprintf(stdout, " Attestation Service: Sending %u bytes of SigRL\n", sig_rl_size);
         if (!write_all(connfd, (uint8_t *) p_sig_rl, sig_rl_size)) {
              fprintf(stdout, "ERROR: failed to send p_sig_rl\n");
              goto cleanup;
@@ -123,7 +126,7 @@ bool handle_attestation_service_connection(int connfd) {
     }
 
     // receiving quote
-    fprintf(stdout, "AS: Receiving Quote size...\n");
+    fprintf(stdout, " Attestation Service: Receiving Quote size...\n");
     if (!read_all(connfd, (uint8_t *) &quote_size, sizeof(quote_size))) {
          fprintf(stdout, "ERROR: failed to recv quote_size\n");
          goto cleanup;
@@ -133,14 +136,14 @@ bool handle_attestation_service_connection(int connfd) {
          fprintf(stdout, "ERROR: failed to allocate %u bytes for quote\n", quote_size);
          goto cleanup;
     }
-    fprintf(stdout, "AS: Receiving %u bytes of Quote...\n", quote_size);
+    fprintf(stdout, " Attestation Service: Receiving %u bytes of Quote...\n", quote_size);
     if (!read_all(connfd, p_quote, quote_size)) {
          fprintf(stdout, "ERROR: failed to recv %u bytes for quote\n", quote_size);
          goto cleanup;
     }
 
     // receiving public_keys
-    fprintf(stdout, "AS: Receiving the size of Enclave's Public Keys...\n");
+    fprintf(stdout, " Attestation Service: Receiving the size of Enclave's Public Keys...\n");
     if (!read_all(connfd, (uint8_t *) &public_keys_size, sizeof(public_keys_size))) {
          fprintf(stdout, "ERROR: failed to recv public_keys_size\n");
          goto cleanup;
@@ -150,13 +153,13 @@ bool handle_attestation_service_connection(int connfd) {
          fprintf(stdout, "ERROR: failed to allocate %u bytes for public_keys\n", public_keys_size);
          goto cleanup;
     }
-    fprintf(stdout, "AS: Receiving %u bytes of Enclave's Public Keys...\n", public_keys_size);
+    fprintf(stdout, " Attestation Service: Receiving %u bytes of Enclave's Public Keys...\n", public_keys_size);
     if (!read_all(connfd, p_public_keys, public_keys_size)) {
          fprintf(stdout, "ERROR: failed to recv %u bytes for public_keys\n", public_keys_size);
          goto cleanup;
     }
 
-    fprintf(stdout, "AS: Computing t_id = SHA256(public_keys)...\n");
+    fprintf(stdout, " Attestation Service: Computing t_id = SHA256(public_keys)...\n");
     SHA256(p_public_keys,public_keys_size,(uint8_t *) &t_id);
 
     if (g_truce_map.find(t_id) != g_truce_map.end()) {
@@ -178,12 +181,12 @@ bool handle_attestation_service_connection(int connfd) {
     g_truce_map[t_id] = t_rec;
     p_public_keys = NULL;
 
-    printf("AS: New record has been successfully added to the records map!\n");
-    printf("t_id:\n");
-    print_buffer((uint8_t *) &t_id, sizeof(t_id));
+    printf(" Attestation Service: New record has been successfully added to the records map!\n");
+    //printf("t_id:\n");
+    //print_buffer((uint8_t *) &t_id, sizeof(t_id));
     att_result = 1;
 #else
-    printf("AS: Getting IAS report...\n");
+    printf(" Attestation Service: Getting IAS report...\n");
     if (!get_ias_report(
                     ias_web_service,
                     (uint8_t *) p_quote,
@@ -193,7 +196,7 @@ bool handle_attestation_service_connection(int connfd) {
                     NULL,
                     0,
                     t_rec.ias_report)) {
-        printf("AS: Failed to get Report from IAS\n");
+        printf(" Attestation Service: Failed to get Report from IAS\n");
     }
     else {
         //printf("\nIAS_report_body = %s\n", t_rec.ias_report.report_body.c_str());
@@ -206,9 +209,9 @@ bool handle_attestation_service_connection(int connfd) {
         g_truce_map[t_id] = t_rec;
         p_public_keys = NULL;
 
-        printf("AS: New record has been successfully added to the records map!\n");
-        printf("t_id:\n");
-        print_buffer((uint8_t *) &t_id, sizeof(t_id));
+        printf(" Attestation Service: New record has been successfully added to the records map!\n");
+        //printf("t_id:\n");
+        //print_buffer((uint8_t *) &t_id, sizeof(t_id));
 
         att_result = 1;
     }
@@ -240,14 +243,14 @@ bool handle_certificate_service_connection(int connfd) {
     bool retval = false;
     uint32_t len = 0;
 
-    fprintf(stdout, "CS: Receiving Truce ID...\n");
+    fprintf(stdout, " Report Service: Receiving Truce ID...\n");
     if (!read_all(connfd, (uint8_t *) &t_id, sizeof(t_id))) {
         printf("ERROR: failed to read tid\n");
         goto cleanup;
     }
 
-    printf("CS: Received t_id:\n");
-    print_buffer((uint8_t *) &t_id, sizeof(t_id));
+    //printf(" Report Service: Received t_id:\n");
+    //print_buffer((uint8_t *) &t_id, sizeof(t_id));
 
     if (g_truce_map.find(t_id) == g_truce_map.end()) {
         fprintf(stdout, "Warning: Truce ID wasn't found in SP map\n");
@@ -255,21 +258,21 @@ bool handle_certificate_service_connection(int connfd) {
         goto cleanup;
     }
     match_result = 1;
-    fprintf(stdout, "CS: found Truce ID! Sending match_result...\n");
+    fprintf(stdout, " Report Service: found Truce ID! Sending match_result...\n");
     write(connfd, &match_result, 1);
 
     t_rec = g_truce_map[t_id];
 
 
     // Sending IAS report body length
-    fprintf(stdout, "CS: Sending IAS_report_body length (=%lu)...\n", t_rec.ias_report.report_body.length());
+    fprintf(stdout, " Report Service: Sending IAS_report_body length (=%lu)...\n", t_rec.ias_report.report_body.length());
     len = htonl(t_rec.ias_report.report_body.length());
     if (!write_all(connfd, (uint8_t *) &len, sizeof(len))) {
         printf("ERROR: failed to send ias report body length");
         goto cleanup;
     }
     // Sending IAS report body
-    fprintf(stdout, "CS: Sending %lu bytes of IAS_report_body...\n", t_rec.ias_report.report_body.length());
+    fprintf(stdout, " Report Service: Sending %lu bytes of IAS_report_body...\n", t_rec.ias_report.report_body.length());
     if (!write_all(connfd,
             (uint8_t *) t_rec.ias_report.report_body.c_str(),
             t_rec.ias_report.report_body.length())) {
@@ -278,14 +281,14 @@ bool handle_certificate_service_connection(int connfd) {
     }
 
     // Sending IAS report signature length
-    fprintf(stdout, "CS: Sending IAS_report_signature length (=%lu)...\n", t_rec.ias_report.report_signature_base64.length());
+    fprintf(stdout, " Report Service: Sending IAS_report_signature length (=%lu)...\n", t_rec.ias_report.report_signature_base64.length());
     len = htonl(t_rec.ias_report.report_signature_base64.length());
     if (!write_all(connfd,(uint8_t *) &len,    sizeof(len))) {
         printf("ERROR: failed to send ias report signature length\n");
         goto cleanup;
     }
     // Sending IAS report signature
-    fprintf(stdout, "CS: Sending %lu bytes of IAS_report_signature...\n", t_rec.ias_report.report_signature_base64.length());
+    fprintf(stdout, " Report Service: Sending %lu bytes of IAS_report_signature...\n", t_rec.ias_report.report_signature_base64.length());
     if (!write_all(connfd,
             (uint8_t *) t_rec.ias_report.report_signature_base64.c_str(),
             t_rec.ias_report.report_signature_base64.length())) {
@@ -295,14 +298,14 @@ bool handle_certificate_service_connection(int connfd) {
 
 
     // Sending IAS report cert_chain length
-    fprintf(stdout, "CS: Sending IAS_cert_chain length (=%lu)...\n", t_rec.ias_report.report_cert_chain_urlsafe_pem.length());
+    fprintf(stdout, " Report Service: Sending IAS_cert_chain length (=%lu)...\n", t_rec.ias_report.report_cert_chain_urlsafe_pem.length());
     len = htonl(t_rec.ias_report.report_cert_chain_urlsafe_pem.length());
     if (!write_all(connfd,(uint8_t *) &len,    sizeof(len))) {
         printf("ERROR: failed to send ias report cert_chain length\n");
         goto cleanup;
     }
     // Sending IAS report cert_chain
-    fprintf(stdout, "CS: Sending %lu bytes of IAS_cert_chain...\n", t_rec.ias_report.report_cert_chain_urlsafe_pem.length());
+    fprintf(stdout, " Report Service: Sending %lu bytes of IAS_cert_chain...\n", t_rec.ias_report.report_cert_chain_urlsafe_pem.length());
     if (!write_all(connfd,
             (uint8_t *) t_rec.ias_report.report_cert_chain_urlsafe_pem.c_str(),
             t_rec.ias_report.report_cert_chain_urlsafe_pem.length())) {
@@ -311,14 +314,14 @@ bool handle_certificate_service_connection(int connfd) {
     }
 
     // Sending public_keys_size
-    fprintf(stdout, "CS: Sending Public Keys size (=%u)...\n", t_rec.public_keys_size);
+    //fprintf(stdout, " Report Service: Sending Public Keys size (=%u)...\n", t_rec.public_keys_size);
     len = htonl(t_rec.public_keys_size);
     if (!write_all(connfd,(uint8_t *) &len,    sizeof(len))) {
         printf("ERROR: failed to send public_keys_size\n");
         goto cleanup;
     }
     // Sending public_keys
-    fprintf(stdout, "CS: Sending %u bytes of Public Keys...\n", t_rec.public_keys_size);
+    fprintf(stdout, " Report Service: Sending %u bytes of Public Keys...\n", t_rec.public_keys_size);
     if (!write_all(connfd,
             (uint8_t *) t_rec.p_public_keys,
             t_rec.public_keys_size)) {
@@ -337,9 +340,8 @@ cleanup:
 
 void* certificate_service(void *arg)
 {
-
+    int port = report_service_port;
     int listenfd = -1, connfd = -1;
-    int port = SP_CS_PORT;
 
     if (!inet_listen(listenfd, port)) {
         fprintf(stdout, "ERROR: Failed to listen on port %d\n", port);
@@ -348,14 +350,14 @@ void* certificate_service(void *arg)
 
     while (true)
     {
-        fprintf(stdout, "CS: Waiting for incoming connections on port %d\n", port);
+        fprintf(stdout, "Report Service: Waiting for incoming connections on port %d\n", port);
         if (!inet_accept(connfd, listenfd)) {
             fprintf(stdout, "ERROR: inet_accept has failed (port %d)\n", port);
             goto cleanup;
         }
 
         if (!handle_certificate_service_connection(connfd)) {
-            fprintf(stdout, "CS: Certification for connection %d has failed\n", connfd);
+            fprintf(stdout, " Report Service: Certification for connection %d has failed\n", connfd);
             goto cleanup;
         }
         close(connfd);
@@ -374,9 +376,8 @@ cleanup:
 
 void* attestation_service(void *arg) 
 {
-
+    int port = attestation_service_port;
     int listenfd = 0, connfd = 0;
-    int port = SP_AS_PORT;
 
     if (!inet_listen(listenfd, port)) {
         fprintf(stdout, "ERROR: Failed to listen on port %d\n", port);
@@ -386,7 +387,7 @@ void* attestation_service(void *arg)
 
     while(true)
     {
-        fprintf(stdout, "AS: Waiting for incoming TCP connections\n");
+        fprintf(stdout, "Attestation Service: Waiting for incoming TCP connections on port %d\n", port);
 
         if (!inet_accept(connfd, listenfd)) {
             fprintf(stdout, "ERROR: inet_accept has failed (port %d)\n", port);
@@ -394,7 +395,7 @@ void* attestation_service(void *arg)
         }
 
         if (!handle_attestation_service_connection(connfd)) {
-            fprintf(stdout, "AS: Attestation for connection %d has failed\n", connfd);
+            fprintf(stdout, " Attestation Service: Attestation for connection %d has failed\n", connfd);
             goto cleanup;
         }
 
@@ -419,17 +420,39 @@ int main(int argc, char* argv[])
     printf("******* Warning: Server Running in IAS Simulation Mode ******\n");
 #endif
 
+    attestation_service_port = SP_AS_PORT_DEFAULT;
+    report_service_port = SP_RS_PORT_DEFAULT;
+
+    // Read server config, if available: 
+    FILE *config_file = fopen("server.config","r");
+    if (NULL != config_file) {
+        char as_port[10];
+        char rs_port[10];
+
+        int res = fscanf(config_file," AS_PORT=%s",as_port);
+        if (1 == res) {
+            attestation_service_port = stoi(as_port);
+        }
+
+        res = fscanf(config_file," RS_PORT=%s",rs_port);
+        if (1 == res) {
+            report_service_port = stoi(rs_port);
+        }
+
+        fclose (config_file);
+    }
+
     int err = pthread_create(&(tid[0]), NULL, &attestation_service, NULL);
     if (err != 0)
         printf("\ncan't create AS thread :[%s]", strerror(err));
     else
-        printf("\n AS Thread created successfully\n");
+        printf("Attestation Service Thread created successfully\n");
 
     err = pthread_create(&(tid[1]), NULL, &certificate_service, NULL);
     if (err != 0)
-        printf("\ncan't create CS thread :[%s]", strerror(err));
+        printf("\ncan't create Report Service thread :[%s]", strerror(err));
     else
-        printf("\n CS Thread created successfully\n");
+        printf("Report Service Thread created successfully\n");
 
 
     while (true) {sleep(1000);}

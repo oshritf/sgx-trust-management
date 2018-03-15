@@ -37,7 +37,8 @@
 
 FILE* OUTPUT =  stdout;
 
-const char* truceServerAddress;
+char truceServerAddress[100]; //TODO
+int truceServerPort = -1;
 
 
 void print_string(const char* str) {
@@ -46,7 +47,19 @@ void print_string(const char* str) {
 
 
 bool truce_client_init(const char* truce_server_address) {
-    truceServerAddress = truce_server_address;
+    const char *port_pos = strchr(truce_server_address, ':');
+    if (port_pos) {
+        size_t addr_len = port_pos - truce_server_address;
+        memcpy(truceServerAddress, truce_server_address, addr_len);
+        truceServerAddress[addr_len] = '\0';
+        truceServerPort = std::stoi(port_pos + 1);
+    }
+    else {
+        memcpy(truceServerAddress, truce_server_address, strlen(truce_server_address));
+        truceServerPort = SP_RS_PORT_DEFAULT;
+    }
+
+    fprintf(OUTPUT, "TruCE server address: %s, port %d\n", truceServerAddress, truceServerPort);
 
     // TODO: we call curl_global_init since for some reason, it makes verify_cert_chain to work.
     // It might be cause due to some memory leak, or for some good reason. We should investigate it.
@@ -67,7 +80,6 @@ bool truce_client_recv_enclave_record(
     }
 
     // Create connection to TruCE server
-
     int sockfd = -1;
     char *ias_report_body = NULL;
     char *ias_report_signature_base64 = NULL;
@@ -79,9 +91,9 @@ bool truce_client_recv_enclave_record(
     int tmp_int = 0;
     uint8_t match_result = 0;
 
-    if (!inet_connect(sockfd, truceServerAddress, SP_CS_PORT)) {
+    if (!inet_connect(sockfd, truceServerAddress, truceServerPort)) {
         fprintf(OUTPUT, "ERROR: connecting to TruCE server (%s:%d) has failed\n", 
-            truceServerAddress, SP_CS_PORT);
+            truceServerAddress, truceServerPort);
         return false;
     }
 

@@ -28,9 +28,8 @@
 
 #define IAS_URL     "https://test-as.sgx.trustedservices.intel.com:443/attestation/sgx/v2/"
 
-#define SP_AS_PORT    4000
-#define SP_CS_PORT    5000
-#define APP_PORT    6000
+#define SP_AS_PORT_DEFAULT    48023
+#define SP_RS_PORT_DEFAULT    48033
 
 
 #endif /* TRUCE_DEFS_H_ */

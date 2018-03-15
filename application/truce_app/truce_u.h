@@ -17,8 +17,8 @@
     * under the License.
     */
 
-#ifndef _TRUCE_H
-#define _TRUCE_H
+#ifndef _TRUCE_U_H
+#define _TRUCE_U_H
 
 #include "sgx_eid.h"
 #include <openssl/sha.h>
@@ -28,6 +28,8 @@
 #ifdef  __cplusplus
 extern "C" {
 #endif
+
+const int TRUCE_ID_LENGTH = SHA256_DIGEST_LENGTH;
 
 typedef struct {
     sgx_enclave_id_t enclave_id;
