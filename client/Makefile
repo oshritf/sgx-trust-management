@@ -17,7 +17,7 @@
 
 
 TRUCE_CLIENT_LIB:=libtruce_client.so
-TRUCE_CLIENT:=truce_client
+TRUCE_CLIENT:=client
 
 SGX_SDK ?= /opt/intel/sgxsdk
 
@@ -72,7 +72,7 @@ all: ias_report_verifier $(TRUCE_CLIENT_LIB) $(TRUCE_CLIENT)
 
 ias_report_verifier: 
 	@echo "Building IAS_report_verifier"
-	@cd IAS_report_verifier && make SIMULATE_IAS=$(SIM_VALUE) SGX_SDK=$(SGX_SDK) SGX_SSL=$(SGX_SSL)
+	@cd IAS_report_verifier && make SIMULATE_IAS=$(SIM_VALUE) SGX_SDK=$(SGX_SDK) SSL_SGX=$(SSL_SGX)
 
 ####################################
 

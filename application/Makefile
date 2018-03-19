@@ -28,9 +28,8 @@ SGX_ARCH ?= x64
 SGX_DEBUG ?= 0
 SGX_PRERELEASE ?= 1
 
-#SGX_SSL ?= ../../packages/sgxssl_for_2.0_171129
-SGX_SSL ?= /opt/intel/sgxssl
-SGX_SSL_REAL_PATH := $(realpath $(SGX_SSL))
+SSL_SGX ?= /opt/intel/sgxssl
+SSL_SGX_REAL_PATH := $(realpath $(SSL_SGX))
 
 ifeq ($(shell getconf LONG_BIT), 32)
 	SGX_ARCH := x86
@@ -74,7 +73,7 @@ else
 endif
 
 App_Cpp_Files := truce_app/app.cpp truce_app/truce.cpp truce_app/quote_creator/quote_creator.cpp
-App_Include_Paths := -I../ -I$(SGX_SDK)/include -Itruce_app -I$(SGX_SSL)/include -I../aux_lib -Itruce_app/quote_creator
+App_Include_Paths := -I../ -I$(SGX_SDK)/include -Itruce_app -I$(SSL_SGX)/include -I../aux_lib -Itruce_app/quote_creator
 
 App_C_Flags := $(SGX_COMMON_CFLAGS) -fPIC -Wno-attributes $(App_Include_Paths)
 
@@ -91,7 +90,7 @@ else
 endif
 
 App_Cpp_Flags := $(App_C_Flags) -std=c++11
-App_Link_Flags := $(SGX_COMMON_CFLAGS) -L$(SGX_LIBRARY_PATH) -L$(SGX_SSL)/lib64/release -l$(Urts_Library_Name) -L. -L../aux_lib -laux_lib -lcrypto -lpthread -lsgx_usgxssl -Wl,-rpath=$(CURDIR)
+App_Link_Flags := $(SGX_COMMON_CFLAGS) -L$(SGX_LIBRARY_PATH) -L$(SSL_SGX)/lib64/release -l$(Urts_Library_Name) -L. -L../aux_lib -laux_lib -lcrypto -lpthread -lsgx_usgxssl -Wl,-rpath=$(CURDIR)
 
 ifneq ($(SGX_MODE), HW)
 	App_Link_Flags += -lsgx_uae_service_sim
@@ -115,7 +114,7 @@ endif
 Crypto_Library_Name := sgx_tcrypto
 
 Enclave_Cpp_Files := truce_enclave/truce_enclave.cpp
-Enclave_Include_Paths := -I../ -I$(SGX_SDK)/include -I$(SGX_SDK)/include/tlibc -I$(SGX_SDK)/include/stlport -I$(SGX_SSL)/include
+Enclave_Include_Paths := -I../ -I$(SGX_SDK)/include -I$(SGX_SDK)/include/tlibc -I$(SGX_SDK)/include/stlport -I$(SSL_SGX)/include
 
 Enclave_C_Flags := $(SGX_COMMON_CFLAGS) -nostdinc -fvisibility=hidden -fpie -fstack-protector $(Enclave_Include_Paths)
 Enclave_Cpp_Flags := $(Enclave_C_Flags) -std=c++03 -nostdinc++
@@ -129,7 +128,7 @@ Enclave_Cpp_Flags := $(Enclave_C_Flags) -std=c++03 -nostdinc++
 #       Use `--start-group' and `--end-group' to link these libraries.
 # Do NOT move the libraries linked with `--start-group' and `--end-group' within `--whole-archive' and `--no-whole-archive' options.
 # Otherwise, you may get some undesirable errors.
-Enclave_Link_Flags := $(SGX_COMMON_CFLAGS) -Wl,--no-undefined -nostdlib -nodefaultlibs -nostartfiles -L$(SGX_LIBRARY_PATH) -L$(SGX_SSL)/lib64/release \
+Enclave_Link_Flags := $(SGX_COMMON_CFLAGS) -Wl,--no-undefined -nostdlib -nodefaultlibs -nostartfiles -L$(SGX_LIBRARY_PATH) -L$(SSL_SGX)/lib64/release \
 	-Wl,--whole-archive -l$(Trts_Library_Name) -Wl,--no-whole-archive \
         -Wl,--whole-archive -lsgx_tsgxssl -Wl,--no-whole-archive \
 	-Wl,--start-group -lsgx_tstdc -lsgx_tstdcxx -l$(Crypto_Library_Name) -l$(Service_Library_Name) -lsgx_tsgxssl_crypto -Wl,--end-group \
@@ -197,7 +196,7 @@ endif
 ######## App Objects ########
 
 truce_app/truce_enclave_u.c: $(SGX_EDGER8R) truce_enclave/truce_enclave.edl
-	@cd truce_app && $(SGX_EDGER8R) --untrusted ../truce_enclave/truce_enclave.edl --search-path ../truce_enclave --search-path $(SGX_SDK)/include --search-path $(SGX_SSL_REAL_PATH)/include
+	@cd truce_app && $(SGX_EDGER8R) --untrusted ../truce_enclave/truce_enclave.edl --search-path ../truce_enclave --search-path $(SGX_SDK)/include --search-path $(SSL_SGX_REAL_PATH)/include
 	@echo "GEN  =>  $@"
 
 truce_app/truce_enclave_u.o: truce_app/truce_enclave_u.c
@@ -220,7 +219,7 @@ $(App_Name): truce_app/truce_enclave_u.o $(App_Cpp_Objects)
 ######## Enclave Objects ########
 
 truce_enclave/truce_enclave_t.c: $(SGX_EDGER8R) truce_enclave/truce_enclave.edl
-	@cd truce_enclave && $(SGX_EDGER8R) --trusted ../truce_enclave/truce_enclave.edl --search-path ../truce_enclave --search-path $(SGX_SDK)/include --search-path $(SGX_SSL_REAL_PATH)/include
+	@cd truce_enclave && $(SGX_EDGER8R) --trusted ../truce_enclave/truce_enclave.edl --search-path ../truce_enclave --search-path $(SGX_SDK)/include --search-path $(SSL_SGX_REAL_PATH)/include
 	@echo "GEN  =>  $@"
 
 truce_enclave/truce_enclave_t.o: truce_enclave/truce_enclave_t.c

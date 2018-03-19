@@ -14,8 +14,8 @@ Trust Management Framework can run in either real or simulated IAS mode. In the 
 
 ## Third party dependencies
 * Download and install the latest packages of Intel SGX LINUX from https://01.org/intel-software-guard-extensions/downloads.
-* Download and build SGX SSL located at the git repository https://github.com/intel/intel-sgx-ssl.
-* Update the values of SGX_SDK and SGX_SSL in the Makefile.
+* Download and build SSL SGX located at the git repository https://github.com/intel/intel-sgx-ssl.
+* Update the values of SGX_SDK and SSL_SGX in the Makefile.
 * Download cpp-base64 from the git repository https://github.com/ReneNyffenegger/cpp-base64, and put the cpp-base64 folder under the aux_lib folder.
 * Install the following packages:
 	- sudo apt-get install libssl-dev
@@ -29,7 +29,7 @@ respond with a SPID. Update defs.h with your SPID, certificate and the quote sig
 * In order to build in a real IAS mode, run "make".
 * A successful compilation should produce the following files:
 	- Under application: libtruce_u.so, libtruce_t.a (and app).
-	- Under client: libtruce_client.so (and truce_client).
+	- Under client: libtruce_client.so (and client).
 	- Under service-provider: truce_server.
 
 ## Usage
@@ -45,6 +45,33 @@ respond with a SPID. Update defs.h with your SPID, certificate and the quote sig
 * Service-Provider:
 	- Run the truce_server executable
 
+
+## Running the samples
+
+1. Start the Truce server:
+
+    ```sh
+    cd /path-to/sgx-trust-management/service_provider
+    ./truce_server
+    ```
+
+2. In a separate window, run the sample application:
+
+    ```sh
+    export LD_LIBRARY_PATH=/path-to/sgx-trust-management/application
+    source sgxsdk/environment # from SGX SDK install directory
+    cd /path-to/sgx-trust-management/application
+    #Truce server address
+    ./app 127.0.0.1
+    ```
+
+3. In a separate window, run the client:
+
+    ```sh
+    export LD_LIBRARY_PATH=/path-to/sgx-trust-management/client
+    cd /path-to/sgx-trust-management/client
+    ./client 127.0.0.1 
+    ```
 
 ## Contact
 Feel free to write to Gidon Gershinsky (gidon@il.ibm.com) and Eliad Tsfadia (eliad.tsfadia@ibm.com).

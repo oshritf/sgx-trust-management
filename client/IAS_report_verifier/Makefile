@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-SGX_SSL ?= /opt/intel/sgxssl
+SSL_SGX ?= /opt/intel/sgxssl
 SGX_SDK ?= /opt/intel/sgxsdk
 SGX_DEBUG ?= 0
 SGX_ARCH ?= x64
@@ -57,7 +57,7 @@ App_C_Flags := $(SGX_COMMON_CFLAGS) -fPIC -Wno-attributes $(App_Include_Paths)
 App_Cpp_Flags := $(App_C_Flags) -std=c++11
 App_Link_Flags := $(SGX_COMMON_CFLAGS) -lcrypto -L$(SGX_LIB_DIR) -lpthread -Wl,-rpath=$(CURDIR)
 
-Enclave_Include_Paths := -I$(SGX_SDK)/include -I../ -I../../ -I$(SGX_SDK)/include/tlibc -I$(SGX_SDK)/include/stlport -I$(SGX_SSL)/include
+Enclave_Include_Paths := -I$(SGX_SDK)/include -I../ -I../../ -I$(SGX_SDK)/include/tlibc -I$(SGX_SDK)/include/stlport -I$(SSL_SGX)/include
 Enclave_C_Flags := $(SGX_COMMON_CFLAGS) -nostdinc -fvisibility=hidden -fpie -fstack-protector $(Enclave_Include_Paths)
 Enclave_Cpp_Flags := $(Enclave_C_Flags) -std=c++03 -nostdinc++
 

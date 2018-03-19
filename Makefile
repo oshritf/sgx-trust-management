@@ -19,7 +19,7 @@
 .PHONY: all
 
 SGX_SDK ?= /opt/intel/sgxsdk
-SGX_SSL ?= /opt/intel/sgxssl
+SSL_SGX ?= /opt/intel/sgxssl
 
 ifdef SIMULATE_IAS
 SIM_VALUE ?= $(SIMULATE_IAS)
@@ -35,15 +35,15 @@ auxlib:
 	
 trucelib: 
 	@echo "Building application"
-	@cd application && make SIMULATE_IAS=$(SIM_VALUE) SGX_SDK=$(SGX_SDK) SGX_SSL?=$(SGX_SSL)
+	@cd application && make SIMULATE_IAS=$(SIM_VALUE) SGX_SDK=$(SGX_SDK) SSL_SGX?=$(SSL_SGX)
 	
 service_provider: 
 	@echo "Building service-provider"
-	@cd service-provider && make SIMULATE_IAS=$(SIM_VALUE) SGX_SDK=$(SGX_SDK) SGX_SSL?=$(SGX_SSL)
+	@cd service-provider && make SIMULATE_IAS=$(SIM_VALUE) SGX_SDK=$(SGX_SDK) SSL_SGX?=$(SSL_SGX)
 	
 truce_client: 
 	@echo "Building client"
-	@cd client && make SIMULATE_IAS=$(SIM_VALUE) SGX_SDK=$(SGX_SDK) SGX_SSL?=$(SGX_SSL)
+	@cd client && make SIMULATE_IAS=$(SIM_VALUE) SGX_SDK=$(SGX_SDK) SSL_SGX?=$(SSL_SGX)
 
 .PHONY: clean
 	

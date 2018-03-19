@@ -20,15 +20,13 @@
 
 
 #include <stdio.h>
-#include <limits.h>
 #include <unistd.h>
 #include <string.h>
 
-#include "sgx_eid.h"
 #include "sgx_urts.h"
 #include "truce_u.h"
-#include "defs.h"
 #include "truce_enclave_u.h"
+
 
 
 #define ENCLAVE_PATH "truce_enclave.signed.so"

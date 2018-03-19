@@ -18,13 +18,8 @@
     */
 
 #include "truce_client.h"
-#include "defs.h"
-
-#include <sys/socket.h>
 #include <string.h>
 #include <unistd.h>
-#include <errno.h>
-#include <arpa/inet.h> 
 
 
 const char *g_secret1 = "This is my first secret";
@@ -32,12 +27,18 @@ const char *g_secret2 = "This is my second and longer secret";
 
 int main(int argc, char* argv[])
 {
+
+    if (argc < 2) {
+        printf("ERROR: Need IP address as argument\n");
+        return 1;
+    }
     const char* truce_server_address = argv[1];
     const char* agent_address = argv[2];
-    const char* file_name = argv[3];
-    FILE *file = NULL;
-    uint8_t *data_buf = NULL;
-    unsigned long file_len = 0;
+
+    if (NULL == agent_address) {
+        agent_address = truce_server_address;
+    }
+
     int tmp_int;
     truce_id_t t_id = {{0}};
     truce_record_t t_rec;
