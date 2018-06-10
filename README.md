@@ -20,7 +20,7 @@ Trust Management Framework can run in either real or simulated IAS mode. In the 
 * Install the following packages:
 	- sudo apt-get install libssl-dev
 	- sudo apt-get install libjsoncpp-dev
-	- sudo apt-get install libcur14-openssl-dev
+	- sudo apt-get install libcurl4-openssl-dev
 * In order to run the code in a real IAS mode, create a [developer account](https://software.intel.com/en-us/sgx). After the registration with a certificate (can be self-signed for development purposes), Intel will
 respond with a SPID. Update defs.h with your SPID, certificate and the quote signing type.
 
