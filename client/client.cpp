@@ -131,7 +131,7 @@ int main(int argc, char* argv[])
         goto cleanup;
     }
 
-    if (!write_all(sockfd, (uint8_t *) &encrypted_secret1, encrypted_secret1_size)) {
+    if (!write_all(sockfd, encrypted_secret1, encrypted_secret1_size)) {
         printf("ERROR: failed to send %u bytes of encrypted_secret1\n", encrypted_secret1_size);
         goto cleanup;
     }
@@ -142,7 +142,7 @@ int main(int argc, char* argv[])
         goto cleanup;
     }
     
-    if (!write_all(sockfd, (uint8_t *) &encrypted_secret2, encrypted_secret2_size)) {
+    if (!write_all(sockfd, encrypted_secret2, encrypted_secret2_size)) {
         printf("ERROR: failed to send %u bytes of encrypted_secret2\n", encrypted_secret2_size);
         goto cleanup;
     }
